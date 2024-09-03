@@ -3,20 +3,80 @@ import Victory from "@/assets/victory.svg";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { apiClient } from "@/lib/api-client";
+import { useAppStore } from "@/store";
+import { LOGIN_ROUTE, SIGNUP_ROUTE } from "@/utils/constans";
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 
 const Auth = () => {
+  const navigate = useNavigate();
+  const { setUserInfo } = useAppStore()
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
 
-  const handleLogin = async() => {
+  const validateSignup = () => {
+    if (!email.length) {
+      toast.error("Email is Required");
+      return false;
+    }
+    if (!password.length) {
+      toast.error("Password is Required");
+      return false;
+    }
+    if (password !== confirmPassword) {
+      toast.error("The passwords doesnt matches");
+      return false;
+    }
+    return true;
+  };
 
-  }
+  const validadeLogin = () => {
+    if (!email.length) {
+      toast.error("Email is Required");
+      return false;
+    }
+    if (!password.length) {
+      toast.error("Password is Required");
+    }
+    return true;
+  };
 
-  const handleSignup = async() => {
+  const handleLogin = async () => {
+    if (validadeLogin()) {
+      const response = await apiClient.post(
+        LOGIN_ROUTE,
+        { email, password },
+        { withCredentials: true }
+      );
+      if (response.data.user.id) {
+        setUserInfo(response.data.user)
+        if (response.data.user.profileSetup) {
+          navigate("/chat");
+        } else {
+          navigate("/profile");
+        }
+      }
+      console.log({ response });
+    }
+  };
 
-  }
+  const handleSignup = async () => {
+    if (validateSignup()) {
+      const response = await apiClient.post(
+        SIGNUP_ROUTE,
+        { email, password },
+        { withCredentials: true }
+      );
+      if (response.status === 201) {
+        setUserInfo(response.data.user)
+        navigate("/profile");
+      }
+      console.log({ response });
+    }
+  };
 
   return (
     <div className="h-[100vh] w-[100vw] flex items-center justify-center">
@@ -32,7 +92,7 @@ const Auth = () => {
             </p>
           </div>
           <div className="flex items-center justify-center w-full">
-            <Tabs className="w-3/4">
+            <Tabs className="w-3/4" defaultValue="login">
               <TabsList className="bg-transparent rounded-none w-full">
                 <TabsTrigger
                   value="login"
@@ -62,10 +122,12 @@ const Auth = () => {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                 />
-                <Button className="rounded-full p-6" onClickEvent={handleLogin}> Login </Button>
+                <Button className="rounded-full p-6" onClick={handleLogin}>
+                  Login
+                </Button>
               </TabsContent>
               <TabsContent className="flex flex-col gap-5" value="signup">
-              <Input
+                <Input
                   placeholder="Email"
                   type="email"
                   className="rounded-full p-6"
@@ -86,13 +148,19 @@ const Auth = () => {
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                 />
-                <Button className="rounded-full p-6" onClickEvent={handleSignup}> Signup </Button>
+                <Button className="rounded-full p-6" onClick={handleSignup}>
+                  Signup
+                </Button>
               </TabsContent>
             </Tabs>
           </div>
         </div>
         <div className="hidden xl:flex justify-center items-center">
-          <img src={Background} alt="Background Lgoin" className="h-[550px] xl:h-[450px]"/>
+          <img
+            src={Background}
+            alt="Background Login"
+            className="h-[550px] xl:h-[450px]"
+          />
         </div>
       </div>
     </div>
