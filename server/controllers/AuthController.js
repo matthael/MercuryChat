@@ -35,16 +35,16 @@ export const signup = async (request, response, next) => {
   }
 };
 
-export const login = async (resquest, response, next) => {
+export const login = async (request, response, next) => {
   try {
-    const { email, password } = resquest.body;
+    const { email, password } = request.body;
     if (!email || !password) {
       return response.status(400).send("Email and Password is Required");
     }
 
     const user = await User.findOne({ email });
     if (!user) {
-      return response.status(404).send("User not Found");
+      return response.status(404).send("User with the given email not found");
     }
 
     const auth = await compare(password, user.password);
@@ -72,3 +72,27 @@ export const login = async (resquest, response, next) => {
     return response.status(500).send("Internal Server Error");
   }
 };
+
+export const getUserInfo = async (request, response, next) => {
+  try {
+    const userData = await User.findById(request.userId)
+    if(!userData) {
+      return response.status(404).send("User with the given id not found")
+    }
+
+    return response.status(200).json({
+        id: userData.id,
+        email: userData.email,
+        profileSetup: userData.profileSetup,
+        firstName: userData.firstName,
+        lastName: userData.lastName,
+        image: userData.image,
+        color: userData.color,
+    });
+  } catch (error) {
+    console.log({ error });
+    return response.status(500).send("Internal Server Error");
+  }
+};
+
+
